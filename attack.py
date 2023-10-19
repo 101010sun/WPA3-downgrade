@@ -156,7 +156,7 @@ class NetworkConfig():
             el = el.payload
 
     def find_rogue_channel(self):
-        self.rogue_channel = 1 if self.real_channel >= 6 else 8
+        self.rogue_channel = 1 if self.real_channel > 6 else 11
 
     # hostapd.confg寫檔
     def write_config(self, iface):
