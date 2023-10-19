@@ -243,6 +243,39 @@ def append_csa(p, channel, count=1):
 	return p2
 
 
+def dot11_to_str(p):
+	EAP_CODE = {1: "Request"}
+	EAP_TYPE = {1: "Identity"}
+	DEAUTH_REASON = {1: "Unspecified", 2: "Prev_Auth_No_Longer_Valid/Timeout", 3: "STA_is_leaving", 4: "Inactivity", 6: "Unexp_Class2_Frame", 7: "Unexp_Class3_Frame", 8: "Leaving", 15: "4-way_HS_timeout"}
+	dict_or_str = lambda d, v: d.get(v, str(v))
+	if p.type == 0:
+		if p.haslayer(Dot11Beacon):     return "Beacon(seq=%d, TSF=%d)" % (dot11_get_seqnum(p), p[Dot11Beacon].timestamp)
+		if p.haslayer(Dot11ProbeReq):   return "ProbeReq(seq=%d)" % dot11_get_seqnum(p)
+		if p.haslayer(Dot11ProbeResp):  return "ProbeResp(seq=%d)" % dot11_get_seqnum(p)
+		if p.haslayer(Dot11Auth):       return "Auth(seq=%d, status=%d)" % (dot11_get_seqnum(p), p[Dot11Auth].status)
+		if p.haslayer(Dot11Deauth):     return "Deauth(seq=%d, reason=%s)" % (dot11_get_seqnum(p), dict_or_str(DEAUTH_REASON, p[Dot11Deauth].reason))
+		if p.haslayer(Dot11AssoReq):    return "AssoReq(seq=%d)" % dot11_get_seqnum(p)
+		if p.haslayer(Dot11ReassoReq):  return "ReassoReq(seq=%d)" % dot11_get_seqnum(p)
+		if p.haslayer(Dot11AssoResp):   return "AssoResp(seq=%d, status=%d)" % (dot11_get_seqnum(p), p[Dot11AssoResp].status)
+		if p.haslayer(Dot11ReassoResp): return "ReassoResp(seq=%d, status=%d)" % (dot11_get_seqnum(p), p[Dot11ReassoResp].status)
+		if p.haslayer(Dot11Disas):      return "Disas(seq=%d)" % dot11_get_seqnum(p)
+		if p.subtype == 13:      return "Action(seq=%d)" % dot11_get_seqnum(p)
+	elif p.type == 1:
+		if p.subtype ==  9:      return "BlockAck"
+		if p.subtype == 11:      return "RTS"
+		if p.subtype == 13:      return "Ack"
+	elif p.type == 2:
+		if p.haslayer(Dot11WEP): return "EncryptedData(seq=%d, IV=%d)" % (dot11_get_seqnum(p), dot11_get_iv(p))
+		if p.subtype == 4:       return "Null(seq=%d, sleep=%d)" % (dot11_get_seqnum(p), p.FCfield & 0x10 != 0)
+		if p.subtype == 12:      return "QoS-Null(seq=%d, sleep=%d)" % (dot11_get_seqnum(p), p.FCfield & 0x10 != 0)
+		if p.haslayer(EAPOL):
+			if get_eapol_msgnum(p) != 0: return "EAPOL-Msg%d(seq=%d,replay=%d)" % (get_eapol_msgnum(p), dot11_get_seqnum(p), get_eapol_replaynum(p))
+			elif p.haslayer(EAP):return "EAP-%s,%s(seq=%d)" % (dict_or_str(EAP_CODE, p[EAP].code), dict_or_str(EAP_TYPE, p[EAP].type), dot11_get_seqnum(p))
+			else:                return repr(p)
+		if p.haslayer(Dot11CCMP): return "EncryptedData(seq=%d, IV=%d)" % (dot11_get_seqnum(p), dot11_get_iv(p))
+	return repr(p)	
+
+
 class Attack():
 	def __init__(self, nic_real_mon, nic_rogue_mon, nic_rogue_ap, ssid, password):
 		self.flag = True
