@@ -163,7 +163,7 @@ class NetworkConfig():
         TEMPLATE = """
 interface={iface}
 ssid={ssid}_test
-beacon_int=16
+beacon_int=50
 macaddr_acl=0
 ignore_broadcast_ssid=0
 
