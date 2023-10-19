@@ -175,10 +175,7 @@ wpa_passphrase={password}
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 """
-        now_path = os.path.dirname(os.path.realpath(__file__))
         return TEMPLATE.format(
-            locate=os.path.realpath(os.path.join(
-                now_path, "../hostapd/hostapd_ctrl")),
             iface=iface,
             ssid=self.ssid,
             channel=self.rogue_channel,
@@ -345,7 +342,7 @@ class Attack():
 
 		with open(os.path.realpath(os.path.join(self.script_path, "./hostapd-2.9/hostapd_rogue.conf")), "w") as fp:
 			fp.write(self.netconfig.write_config(self.nic_rogue_ap))
-		hostapd_path = os.path.realpath(f'{os.path.join(self.script_path, "./hostapd-2.9/hostapd")} {os.path.realpath(os.path.join(self.script_path, "./hostapd/hostapd_rogue.conf"))} -dd -K')
+		hostapd_path = os.path.realpath(f'{os.path.join(self.script_path, "./hostapd-2.9/hostapd")} {os.path.realpath(os.path.join(self.script_path, "./hostapd-2.9/hostapd_rogue.conf"))} -dd -K')
 		self.hostapd = subprocess.Popen(hostapd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 		
 		log(STATUS, "Giving the rogue hostapd one second to initialize ...")
