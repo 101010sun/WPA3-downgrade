@@ -165,6 +165,7 @@ interface={iface}
 ssid={ssid}_test
 beacon_int=16
 macaddr_acl=0
+ignore_broadcast_ssid=0
 
 hw_mode={hw}
 channel={channel}
