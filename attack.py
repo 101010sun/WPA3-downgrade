@@ -1,6 +1,7 @@
 from scapy.all import * 
 import argparse
 import logging
+import atexit
 
 IEEE_TLV_TYPE_SSID    = 0
 IEEE_TLV_TYPE_CHANNEL = 3
