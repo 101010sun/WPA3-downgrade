@@ -343,7 +343,6 @@ class Attack():
 			log(DEBUG, "Rogue hostapd: " + line.strip().decode())
 		else:
 			log(ALL, "Rogue hostapd: " + line.strip().decode())
-		self.hostapd_log.write(datetime.now().strftime('[%H:%M:%S] ') + line.decode())
 
 
 	def run(self):
