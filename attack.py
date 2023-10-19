@@ -162,7 +162,7 @@ class NetworkConfig():
     def write_config(self, iface):
         TEMPLATE = """
 interface={iface}
-ssid={ssid}
+ssid={ssid}_test
 beacon_int=16
 ignore_broadcast_ssid=1
 macaddr_acl=0
