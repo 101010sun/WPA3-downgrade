@@ -1,4 +1,5 @@
 from scapy.all import * 
+from select import select
 import argparse
 import logging
 import atexit
@@ -372,7 +373,7 @@ class Attack():
 		time.sleep(10)
 		self.send_csa_beacon(numbeacons=4)
 		while True:
-			sel = select.select([self.hostapd.stdout], [], [], 0.1)
+			sel = select([self.hostapd.stdout], [], [], 0.1)
 			if self.hostapd.stdout in sel[0]: self.handle_hostapd_out()
 			flag_while += 5
 			
