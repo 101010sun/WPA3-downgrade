@@ -276,6 +276,10 @@ def dot11_to_str(p):
 	return repr(p)	
 
 
+def dot11_get_seqnum(p):
+	return p[Dot11].SC >> 4
+
+
 class Attack():
 	def __init__(self, nic_real_mon, nic_rogue_mon, nic_rogue_ap, ssid, password):
 		self.flag = True
