@@ -361,5 +361,5 @@ if __name__ == "__main__":
 	attack = Attack(args.nic_real_mon, args.nic_rogue_mon, args.nic_rogue_ap, args.ssid, args.password)
 
 	atexit.register(cleanup, attack)
-	attack.run(strict_echo_test=False)
+	attack.run()
 
